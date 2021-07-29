@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-df = pd.read_excel("C:\\Users\\mukes\\Desktop\\IBS2_endsem\\reference.xlsx", usecols="A")
+df = pd.read_excel("reference.xlsx", usecols="A")
 reference = df.iloc[0][0]
 
-df1 = pd.read_excel("C:\\Users\\mukes\\Desktop\\IBS2_endsem\\sequence.xlsx", usecols="A")
+df1 = pd.read_excel("sequence.xlsx", usecols="A")
 dataset = [df1.iloc[i][0] for i in range(0,82)]
 
 nuc = ["a", "c", "g", "t"]
@@ -23,17 +23,17 @@ for i in range(0,len(dataset)):
 
 mt = [m[~np.eye(m.shape[0],dtype=bool)].reshape(m.shape[0],-1) for m in mt]
 mt = [m.flatten() for m in mt]
-#mt = [frozenset(m) for m in mt]
 
 train_size = int(len(dataset) * 0.67)
 test_size = len(dataset) - train_size
 train, test = mt[0:train_size], mt[train_size:len(dataset)]
 
-features = [train[i:i+12] for i in range(0,train_size-12)]
-labels = [train[i] for i in range(12,train_size)]
+features = list(train[i:i+12] for i in range(0,train_size-12))
+labels = list(train[i] for i in range(12,train_size))
 
 # establishing lstm
-
+from numpy.random import seed
+seed(1)
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
 from sklearn.metrics import mean_squared_error
@@ -45,6 +45,12 @@ model.add(Dropout(0.25))
 model.add(Dense(150, activation='relu'))
 model.add(Dropout(0.25))
 model.add(Dense(12, activation='relu'))
-model.compile(optimizer='adam')
+model.compile(optimizer='adam',loss='mse')
 
-hist = model.fit(np.array(features),np.array(labels))
+hist = model.fit(np.array(features),np.array(labels),epochs=10)
+
+t_features = list(test[i:i+11] for i in range(0,test_size-11))
+t_labels = list(test[i] for i in range(11,test_size))
+model.predict(np.array(t_features))
+
+print(np.array(t_labels))
